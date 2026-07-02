@@ -1,0 +1,116 @@
+import React, { useState } from "react";
+import { View, Text, Pressable, ScrollView } from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { ScreenContainer } from "@/components/screen-container";
+import { VideoPlayer } from "@/components/video-player";
+import { useColors } from "@/hooks/use-colors";
+
+export default function PlayerScreen() {
+  const colors = useColors();
+  const router = useRouter();
+  const { channelName, channelUrl, channelLogo } = useLocalSearchParams();
+
+  const [selectedQuality, setSelectedQuality] = useState("auto");
+
+  // Adjust URL based on quality selection
+  const getStreamUrl = () => {
+    if (!channelUrl) return "";
+    const url = Array.isArray(channelUrl) ? channelUrl[0] : channelUrl;
+
+    // If quality is selected, append quality parameter (if supported by stream)
+    if (selectedQuality !== "auto") {
+      // Most HLS streams support quality selection via variant streams
+      return url;
+    }
+    return url;
+  };
+
+  return (
+    <ScreenContainer className="p-0 bg-black">
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+        {/* Video Player */}
+        <View className="bg-black">
+          <VideoPlayer
+            uri={getStreamUrl()}
+            title={Array.isArray(channelName) ? channelName[0] : channelName}
+            autoPlay={true}
+          />
+        </View>
+
+        {/* Channel Info */}
+        <View className="bg-surface border-t border-border p-6">
+          <Text className="text-2xl font-bold text-foreground mb-2">
+            {Array.isArray(channelName) ? channelName[0] : channelName}
+          </Text>
+          <Text className="text-sm text-muted mb-4">Streaming en direct</Text>
+
+          {/* Quality Selector */}
+          <View className="mb-6">
+            <Text className="text-base font-semibold text-foreground mb-3">Qualité</Text>
+            <View className="flex-row gap-2">
+              {["auto", "HD", "FHD"].map((quality) => (
+                <Pressable
+                  key={quality}
+                  onPress={() => setSelectedQuality(quality)}
+                  style={({ pressed }) => [
+                    {
+                      backgroundColor:
+                        selectedQuality === quality ? colors.primary : colors.border,
+                      opacity: pressed ? 0.8 : 1,
+                    },
+                  ]}
+                  className="px-4 py-2 rounded"
+                >
+                  <Text
+                    className={`text-sm font-semibold ${
+                      selectedQuality === quality ? "text-white" : "text-foreground"
+                    }`}
+                  >
+                    {quality === "auto" ? "Auto" : quality}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+
+          {/* Features */}
+          <View className="mb-6">
+            <Text className="text-base font-semibold text-foreground mb-3">Fonctionnalités</Text>
+            <View className="gap-2">
+              <View className="flex-row items-center gap-2">
+                <Text className="text-lg">📺</Text>
+                <Text className="text-sm text-foreground">Lecture IPTV M3U</Text>
+              </View>
+              <View className="flex-row items-center gap-2">
+                <Text className="text-lg">🎬</Text>
+                <Text className="text-sm text-foreground">Plein écran</Text>
+              </View>
+              <View className="flex-row items-center gap-2">
+                <Text className="text-lg">📱</Text>
+                <Text className="text-sm text-foreground">Picture-in-Picture</Text>
+              </View>
+              <View className="flex-row items-center gap-2">
+                <Text className="text-lg">🔊</Text>
+                <Text className="text-sm text-foreground">Contrôle du volume</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Back Button */}
+          <Pressable
+            onPress={() => router.back()}
+            style={({ pressed }) => [
+              {
+                backgroundColor: colors.border,
+                opacity: pressed ? 0.8 : 1,
+              },
+            ]}
+            className="py-3 rounded items-center"
+          >
+            <Text className="text-base font-semibold text-foreground">Retour</Text>
+          </Pressable>
+        </View>
+      </ScrollView>
+    </ScreenContainer>
+  );
+}
